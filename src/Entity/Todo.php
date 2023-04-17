@@ -3,9 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\TodoRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TodoRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Todo
 {
     #[ORM\Id]
@@ -47,9 +49,10 @@ class Todo
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    #[ORM\PrePersist]
+    public function setCreatedAt(): self
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = new DateTimeImmutable('now');
 
         return $this;
     }
@@ -59,9 +62,11 @@ class Todo
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): self
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function setUpdatedAt(): self
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = new DateTimeImmutable('now');
 
         return $this;
     }
