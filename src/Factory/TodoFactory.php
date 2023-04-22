@@ -47,7 +47,6 @@ final class TodoFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'completed' => false,
             'title' => self::faker()->text(255),
         ];
     }
