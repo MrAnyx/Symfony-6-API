@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\MakerBundle\Validator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,7 +38,9 @@ class TodoController extends AbstractController
     public function createTodo(Request $request, TodoRepository $todoRepository, ValidatorInterface $validator, TodoOptionsResolver $todoOptionsResolver): JsonResponse
     {
         try {
-            $fields = $todoOptionsResolver->resolve($request->request->all());
+            $requestBody = json_decode($request->getContent(), true);
+
+            $fields = $todoOptionsResolver->configureTitle(true)->resolve($requestBody);
             $todo = new Todo();
             $todo->setTitle($fields["title"]);
 
@@ -60,5 +63,41 @@ class TodoController extends AbstractController
         $todoRepository->remove($todo, true);
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route("/todos/{id}", "update_todo", methods: ["PATCH", "PUT"])]
+    public function updateTodo(Todo $todo, Request $request, TodoOptionsResolver $todoOptionsResolver, ValidatorInterface $validator, EntityManagerInterface $em)
+    {
+        try {
+            $isPatchMethod = $request->getMethod() === "PATCH";
+            $requestBody = json_decode($request->getContent(), true);
+
+            $fields = $todoOptionsResolver
+                ->configureTitle($isPatchMethod)
+                ->configureCompleted($isPatchMethod)
+                ->resolve($requestBody);
+
+            foreach($fields as $field => $value) {
+                switch($field) {
+                    case "title":
+                        $todo->setTitle($value);
+                        break;
+                    case "completed":
+                        $todo->setCompleted($value);
+                        break;
+                }
+            }
+
+            $errors = $validator->validate($todo);
+            if (count($errors) > 0) {
+                throw new InvalidArgumentException((string) $errors);
+            }
+
+            $em->flush();
+
+            return $this->json($todo);
+        } catch(Exception $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
     }
 }
