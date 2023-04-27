@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Todo;
+use App\OptionsResolver\PaginatorOptionsResolver;
 use App\OptionsResolver\TodoOptionsResolver;
 use App\Repository\TodoRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,11 +23,19 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class TodoController extends AbstractController
 {
     #[Route('/todos', name: 'get_todos', methods: ["GET"])]
-    public function getTodos(TodoRepository $todoRepository, SerializerInterface $serializer): JsonResponse
+    public function getTodos(TodoRepository $todoRepository, Request $request, PaginatorOptionsResolver $paginatorOptionsResolver): JsonResponse
     {
-        $todos = $todoRepository->findAllWithPagination(1);
+        try {
+            $queryParams = $paginatorOptionsResolver
+                ->configurePage()
+                ->resolve($request->query->all());
 
-        return $this->json($todos);
+            $todos = $todoRepository->findAllWithPagination($queryParams["page"]);
+
+            return $this->json($todos);
+        } catch(Exception $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
     }
 
     #[Route("/todos/{id}", "get_todo", methods: ["GET"])]
