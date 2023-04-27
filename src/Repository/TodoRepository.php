@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Todo;
+use App\Model\Paginator;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -37,6 +38,14 @@ class TodoRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function findAllWithPagination(int $page): Paginator
+    {
+        $query = $this->createQueryBuilder('t')
+            ->orderBy('t.createdAt', 'ASC');
+
+        return new Paginator($query, $page);
     }
 
 //    /**

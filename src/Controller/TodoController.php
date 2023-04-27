@@ -8,21 +8,23 @@ use App\Repository\TodoRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use InvalidArgumentException;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route("/api", "api_", format: "xml")]
+#[Route("/api", "api_", format: "json")]
 class TodoController extends AbstractController
 {
     #[Route('/todos', name: 'get_todos', methods: ["GET"])]
-    public function getTodos(TodoRepository $todoRepository): JsonResponse
+    public function getTodos(TodoRepository $todoRepository, SerializerInterface $serializer): JsonResponse
     {
-        $todos = $todoRepository->findAll();
+        $todos = $todoRepository->findAllWithPagination(1);
 
         return $this->json($todos);
     }
