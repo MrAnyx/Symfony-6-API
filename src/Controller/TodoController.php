@@ -9,14 +9,13 @@ use App\Repository\TodoRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use InvalidArgumentException;
-use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route("/api", "api_", format: "json")]
@@ -45,6 +44,7 @@ class TodoController extends AbstractController
     }
 
     #[Route("/todos", "create_todo", methods: ["POST"])]
+    #[IsGranted("IS_AUTHENTICATED")]
     public function createTodo(Request $request, TodoRepository $todoRepository, ValidatorInterface $validator, TodoOptionsResolver $todoOptionsResolver): JsonResponse
     {
         try {
@@ -68,6 +68,7 @@ class TodoController extends AbstractController
     }
 
     #[Route("/todos/{id}", "delete_todo", methods: ["DELETE"])]
+    #[IsGranted("IS_AUTHENTICATED")]
     public function deleteTodo(Todo $todo, TodoRepository $todoRepository)
     {
         $todoRepository->remove($todo, true);
@@ -76,10 +77,11 @@ class TodoController extends AbstractController
     }
 
     #[Route("/todos/{id}", "update_todo", methods: ["PATCH", "PUT"])]
+    #[IsGranted("IS_AUTHENTICATED")]
     public function updateTodo(Todo $todo, Request $request, TodoOptionsResolver $todoOptionsResolver, ValidatorInterface $validator, EntityManagerInterface $em)
     {
         try {
-            $isPatchMethod = $request->getMethod() === "PATCH";
+            $isPatchMethod = $request->getMethod() === "PUT";
             $requestBody = json_decode($request->getContent(), true);
 
             $fields = $todoOptionsResolver
@@ -87,7 +89,7 @@ class TodoController extends AbstractController
                 ->configureCompleted($isPatchMethod)
                 ->resolve($requestBody);
 
-            foreach($fields as $field => $value) {
+            foreach ($fields as $field => $value) {
                 switch($field) {
                     case "title":
                         $todo->setTitle($value);
