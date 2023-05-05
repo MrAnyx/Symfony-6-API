@@ -10,6 +10,6 @@ class TodoFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
-        TodoFactory::createMany(5);
+        TodoFactory::createMany(10);
     }
 }
