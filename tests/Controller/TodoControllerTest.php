@@ -22,9 +22,8 @@ class TodoControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = static::createClient();
-        $kernel = $this->client->getKernel();
 
-        $entityManager = $kernel->getContainer()->get('doctrine')->getManager();
+        $entityManager = self::getContainer()->get('doctrine')->getManager();
         $this->todoRepository = $entityManager->getRepository(Todo::class);
         $this->userRepository = $entityManager->getRepository(User::class);
     }
@@ -93,6 +92,12 @@ class TodoControllerTest extends WebTestCase
         $this->assertResponseFormatSame("json");
 
         $this->testPaginatedResponseFormat();
+
+        // Perform the same operations with an invalid page parameter
+        $this->client->request('GET', '/api/todos?page=hello');
+        $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        $this->client->request('GET', '/api/todos?page=-2');
+        $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
     }
 
     /**
